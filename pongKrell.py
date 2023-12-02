@@ -16,6 +16,9 @@ bg_color = 'black'
 clock = pygame.time.Clock()
 pygame.time.set_timer(pygame.USEREVENT, 1000)
 running = True
+icon = pygame.image.load("Assets/Random/icon.png")
+pygame.display.set_icon(icon)
+
 
 # Paddle dimensions
 
@@ -193,20 +196,22 @@ class GameBall():
         self.reset = False
 
 class Paddle():
-    def __init__(self, width, height, x_pos, y_pos):
+    def __init__(self, width, height, x_pos, y_pos, image):
         self.paddle_width = width
         self.paddle_height = height
         self.x_pos = x_pos
         self.y_pos = y_pos
         self.paddle_rect = pygame.Rect(self.x_pos, self.y_pos, self.paddle_width, self.paddle_height)
+        self.paddle_img = image
 
     def drawPaddle(self, surface):
+        self.paddle_img = pygame.transform.scale(self.paddle_img, (20, 110))
         self.paddle_rect = pygame.Rect(self.x_pos, self.y_pos, self.paddle_width, self.paddle_height)
-        pygame.draw.rect(surface, (255, 255, 255), self.paddle_rect)
+        screen.blit(self.paddle_img, self.paddle_rect)
 
 class P1Paddle(Paddle):
-    def __init__(self, width, height, x_pos, y_pos):
-        super().__init__(width, height, x_pos, y_pos)
+    def __init__(self, width, height, x_pos, y_pos, image):
+        super().__init__(width, height, x_pos, y_pos, image)
 
     def handleMovement(self):
         key = pygame.key.get_pressed()
@@ -216,8 +221,8 @@ class P1Paddle(Paddle):
             self.y_pos += 7
 
 class P2Paddle(Paddle):
-    def __init__(self, width, height, x_pos, y_pos):
-        super().__init__(width, height, x_pos, y_pos)
+    def __init__(self, width, height, x_pos, y_pos, image):
+        super().__init__(width, height, x_pos, y_pos, image)
 
     def handleMovement(self):
         key = pygame.key.get_pressed()
@@ -227,12 +232,14 @@ class P2Paddle(Paddle):
             self.y_pos += 7
 
     def drawPaddle(self, surface):
+        self.paddle_img = pygame.transform.scale(self.paddle_img, (20, 110))
         self.paddle_rect = pygame.Rect(self.x_pos, self.y_pos, self.paddle_width, self.paddle_height)
-        pygame.draw.rect(surface, ("Red"), self.paddle_rect)
+        screen.blit(self.paddle_img, self.paddle_rect)
+        # pygame.draw.rect(surface, ("Red"), self.paddle_rect)
 
 class AiPaddle(Paddle):
-    def __init__(self, width, height, x_pos, y_pos):
-        super().__init__(width, height, x_pos, y_pos)
+    def __init__(self, width, height, x_pos, y_pos, image):
+        super().__init__(width, height, x_pos, y_pos, image)
         self.duration = 1200
         self.move_duration = self.duration
         self.move_cooldown = self.duration
@@ -566,8 +573,12 @@ Player_2 = characterSelect(randint(1, 6), P2_Health)
 game_bg = mapSelect(randint(1, 4))
 # game_bg = mapSelect(2)
 
-newPaddle = P2Paddle(20, 100, 20, 250)
-NewAiPaddle = AiPaddle(20, 100, 800-40, 250)
+P1PaddleImg = pygame.image.load("Assets/Paddles/paddle_p1.jpg")
+P2PaddleImg = pygame.image.load("Assets/Paddles/paddle_p2.jpg")
+AiPaddleImg = pygame.image.load("Assets/Paddles/paddle_ai.jpg")
+
+newPaddle = P2Paddle(20, 100, 20, 250, P1PaddleImg)
+NewAiPaddle = AiPaddle(20, 100, 800-40, 250, AiPaddleImg)
 
 reset = 100
 current = 0
