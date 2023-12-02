@@ -10,7 +10,7 @@ mixer.init()
 
 SIZE = 800, 650
 width, height = SIZE
-pygame.display.set_caption("OOP PROJECT")
+pygame.display.set_caption("PONG II")
 screen = pygame.display.set_mode(SIZE)
 bg_color = 'black'
 clock = pygame.time.Clock()
@@ -36,6 +36,21 @@ for i in range(1, 4):
     bg_image = pygame.transform.scale(image, (800, 500))
     bg_images.append(bg_image)
 bg_width = bg_images[0].get_width()
+
+main_Bg = pygame.image.load("Assets/background/Menu.jpg").convert_alpha()
+resize_main = pygame.transform.scale(main_Bg,(800,650))
+
+menu_images = []
+for i in range(0, 7):
+    m_image = pygame.image.load(f"Assets/background/dark/frame_{i}_delay-1s.gif").convert_alpha()
+    m_image = pygame.transform.scale(m_image, (800, 650))
+    menu_images.append(m_image)
+m_width = menu_images[0].get_width()
+
+# Font
+
+Game_font = pygame.font.Font("Assets/fonts/Robus-BWqOd.otf", 156)
+Game_font_s = pygame.font.Font("Assets/fonts/Robus-BWqOd.otf", 76)
 
 # SpriteSheets
 
@@ -98,7 +113,7 @@ class SpriteSheets():
     def getSprite(self, image_width, image_height, frame):
         frame_0 = pygame.Surface((image_width, image_height), pygame.SRCALPHA).convert_alpha()
         frame_0.blit(self.image, (0, 0), ((frame * image_width), 0, image_width, image_height))
-        frame_0 = pygame.transform.scale(frame_0, (200, 200))
+        frame_0 = pygame.transform.scale(frame_0, (200, 240))
         return frame_0
 
     def getBallSprite(self, image_width, image_height, frame):
@@ -207,9 +222,9 @@ class P2Paddle(Paddle):
 
     def handleMovement(self):
         key = pygame.key.get_pressed()
-        if key[pygame.K_UP]:
+        if key[pygame.K_UP] and self.y_pos > 0:
             self.y_pos -= 7
-        if key[pygame.K_DOWN]:
+        if key[pygame.K_DOWN] and self.y_pos < 400:
             self.y_pos += 7
 
     def drawPaddle(self, surface):
@@ -219,7 +234,7 @@ class P2Paddle(Paddle):
 class AiPaddle(Paddle):
     def __init__(self, width, height, x_pos, y_pos):
         super().__init__(width, height, x_pos, y_pos)
-        self.duration = 1000
+        self.duration = 1200
         self.move_duration = self.duration
         self.move_cooldown = self.duration
         self.last_move_time = pygame.time.get_ticks()
@@ -235,9 +250,9 @@ class AiPaddle(Paddle):
                 self.move_cooldown = self.duration - randint(0, 500)
             else:
                 return
-        if self.y_pos > Ball.y - offset:
+        if self.y_pos > Ball.y - offset and self.y_pos > 0:
             self.y_pos -= move_speed
-        if self.y_pos < Ball.y - offset:
+        if self.y_pos < Ball.y - offset and self.y_pos < 400:
             self.y_pos += move_speed
 
 # SpriteSheet class instance
@@ -272,13 +287,9 @@ def handleBallPhysx():
     current_time = pygame.time.get_ticks()
     delay = 5000
     last_update = pygame.time.get_ticks()
-    # Scroll logic
-    if Ball.dx < 0:
-        scroll -= 2
-    if Ball.dx > 0:
-        scroll += 2
 
     if NewAiPaddle.paddle_rect.colliderect(Ball.ball_rect):
+        Ball.dx += 1
         Ball.dx = -Ball.dx
 
     # Ball boundaries x
@@ -293,6 +304,7 @@ def handleBallPhysx():
             Player_1.current_state = "attack"
 
     if newPaddle.paddle_rect.colliderect(Ball.ball_rect):
+        Ball.dx -= 1
         Ball.dx = -Ball.dx
 
     if Ball.x - ball_rad < - 100:
@@ -311,7 +323,6 @@ def handleBallPhysx():
     if Ball.y - ball_rad < 0 - 10:
         Ball.dy = -Ball.dy
 
-
 def getAnimations(animation_list, length, player, action):
     for x in range(length):
         animation_list.append(getattr(player, action).getSprite(128, 128, x))
@@ -327,12 +338,39 @@ def drawGround():
         screen.blit(ground, ((x * gWidth), 490))
     
 def PlayAnim(count, frame):
-    if frame == count-1:
+    global Game_Over
+    if frame == count - 1:
         frame = count
-        return 0
+        Game_Over = True
+        return False
     elif frame < count:
-        return 1
-    
+        return True
+
+def PlayBg(background):
+    global x_frames_gbg, last_update_bg, running
+    if not running:
+        return
+    animation_delay = 150
+    current_time = pygame.time.get_ticks()
+    if current_time - last_update_bg >= animation_delay:
+        x_frames_gbg = (x_frames_gbg + 1) % len(background)
+        last_update_bg = current_time
+    screen.blit(background[x_frames_gbg], (0, -100))
+
+def PlayMainBg():
+    global x_frames_bg, last_update_bg
+    menu_images = []
+    animation_delay = 60
+    current_time = pygame.time.get_ticks()
+    for i in range(0, 19):
+        m_image = pygame.image.load(f"Assets/background/main/frame_{i}_delay-1s.gif").convert_alpha()
+        m_image = pygame.transform.scale(m_image, (800, 700))
+        menu_images.append(m_image)
+    if current_time - last_update_bg >= animation_delay:
+        x_frames_bg = (x_frames_bg + 1) % len(menu_images)
+        last_update_bg = current_time
+    screen.blit(menu_images[x_frames_bg], (0, -100))
+
 def characterSelect(select, health):
     Player_idle = []
     Player_attack = []
@@ -400,6 +438,28 @@ def characterSelect(select, health):
     NewPlayer.populateAnimation(Player_idle, Player_attack, Player_dead, Player_hurt)
     return NewPlayer
 
+def mapSelect(map):
+    menu_images = []
+    max = 0
+    if map == 1:
+        max = 23
+        loc = "dark"
+    elif map == 2:
+        max = 7
+        loc = "lava"
+    elif map == 3:
+        max = 7
+        loc = "temple"
+    elif map == 4:
+        max = 7
+        loc = "falls"
+    for i in range(0, max):
+        m_image = pygame.image.load(f"Assets/background/{loc}/frame_{i}_delay-1s.gif").convert_alpha()
+        m_image = pygame.transform.scale(m_image, (800, 650))
+        menu_images.append(m_image)
+    
+    return menu_images
+
 def resetBall():
     global reset, current
     if Ball.reset:
@@ -410,26 +470,29 @@ def resetBall():
             current += 1
 
 def mainMenu():
-    global Menu, running
+    global Menu, running, x_frames, last_update  # Include last_update in global variables
     for event in pygame.event.get():
         if event.type == QUIT:
             running = False
             Menu = False
+    PlayMainBg()
 
-        # Display the menu
-        screen.fill((0, 0, 0))  # Black background
-        font = pygame.font.Font(None, 36)
-        start_text = font.render("Start", True, (255, 255, 255))
-        start_rect = start_text.get_rect(center=(400, 300))
-        screen.blit(start_text, start_rect)
+    single_player = Game_font_s.render("Single Player", True, (255, 255, 255))
+    Game_name = Game_font.render("Pong ii", True, (255, 255, 255))
+    Game_name_shadow = Game_font.render("Pong ii", True, (0, 0, 0))
+    sp_rect = single_player.get_rect(center=(400, 240))
+    start_rect_s = Game_name.get_rect(center=(400, 88))
+    start_rect = Game_name.get_rect(center=(400, 85))
+    screen.blit(Game_name_shadow, start_rect_s)
+    screen.blit(Game_name, start_rect)
+    screen.blit(single_player, sp_rect)
 
-        # Check for button click
-        mouse_pos = pygame.mouse.get_pos()
-        if start_rect.collidepoint(mouse_pos):
-            if pygame.mouse.get_pressed()[0]:
-                Menu = False
-
-        pygame.display.update()
+    # Check for button click
+    mouse_pos = pygame.mouse.get_pos()
+    if sp_rect.collidepoint(mouse_pos):
+        if pygame.mouse.get_pressed()[0]:
+            Menu = False
+    pygame.display.update()
 
 def handleAnim():
     global last_update, frame_player_1, frame_player_2
@@ -461,12 +524,22 @@ def handleAnim():
                 Player_2.current_state = "idle"
                 frame_player_2 = 0
 
-    def gameOverScreen():
-        screen.fill("Black")
-        font = pygame.font.Font(None, 36)
-        Game_Over_text = font.render("Start", True, (255, 255, 255))
-        Game_Over_rect = Game_Over_text.get_rect(center=(400, 300))
-        screen.blit(Game_Over_text, Game_Over_rect)
+def gameOverScreen():
+    global frame_player_1, frame_player_2
+    screen.fill("Black")
+    font = pygame.font.Font(None, 36)
+    Game_Over_text = Game_font.render("Game Over!", True, (255, 255, 255))
+    Player_win = Game_font.render(f"Player 1 wins", True, (255, 255, 255))
+    Game_Over_rect = Game_Over_text.get_rect(center=(400, 150))
+    handleAnim()
+    if Player_2.current_state == "death":
+        screen.blit(P1_currentFrame[frame_player_1], (300, 220))
+    elif Player_1.current_state == "death":
+        screen.blit(P2_currentFrame[frame_player_2], (300, 220))
+    screen.blit(Game_Over_text, Game_Over_rect)
+    screen.blit(Player_win, (20, 500))
+    pygame.display.update()
+    clock.tick(80)
 
 Menu = True
 Game_Over = False
@@ -479,6 +552,10 @@ getBallAnimations(Ball_animList, BallLen, Ball)
 
 # Character Animation properties
 animation_cooldown = 100
+last_update_bg = pygame.time.get_ticks()
+x_frames_gbg = 0
+x_frames_bg = 0
+
 
 # Mainloop
 
@@ -487,9 +564,11 @@ frame_player_2 = 0
 
 Player_1 = characterSelect(randint(1, 6), P1_Health)
 Player_2 = characterSelect(randint(1, 6), P2_Health)
+# menu_images = mapSelect(randint(1, 4))
+game_bg = mapSelect(2)
 
-newPaddle = AiPaddle(20, 100, 20, 250)
-NewAiPaddle = AiPaddle(20, 100, 800- 40, 250)
+newPaddle = P2Paddle(20, 100, 20, 250)
+NewAiPaddle = AiPaddle(20, 100, 800-40, 250)
 
 reset = 100
 current = 0
@@ -500,42 +579,49 @@ while running:
             running = False
 
     while (Menu):
-         mainMenu()
+        mainMenu()
 
-    current_time = pygame.time.get_ticks()
-    resetBall()
-    # Handle ball physics
-    handleBallPhysx()
-    # Handle animation
-    handleAnim()
-    #--Draw
-    P1_currentFrame = Player_1.animations[Player_1.current_state]
-    P2_currentFrame = Player_2.animations[Player_2.current_state]
-    screen.fill("#6E260E")
-    #Background
-    drawBg()
-    newPaddle.drawPaddle(screen)
-    newPaddle.handleMovement(Ball)
-    # NewAiPaddle.drawPaddle(screen)
-    # NewAiPaddle.handleMovement(Ball)
-    NewAiPaddle.drawPaddle(screen)
-    NewAiPaddle.handleMovement(Ball)
-    #Health bars
-    hud = pygame.transform.scale(HUDBar, (800, 150))
-    screen.blit(hud, (0, 505))
-    Player_1.health.drawHP(screen)
-    screen.blit(healthBar, (50, 550)) 
-    Player_2.health.drawHP(screen)
-    screen.blit(healthBar, (800 - 250, 550))
-    #Ball
-    Ball.drawBall(Ball_animList)
-    #Draw Sprites
-    screen.blit(P1_currentFrame[frame_player_1], (280, 300))
-    flipped_image = pygame.transform.flip(P2_currentFrame[frame_player_2], True, False)
-    screen.blit(flipped_image, (800 - (280 + 164), 300))
-    #Ground
-    drawGround()
-    #Update display
-    pygame.display.update()
-    clock.tick(80)
+    if Game_Over == True:
+        gameOverScreen()
+    else:
+        current_time = pygame.time.get_ticks()
+        resetBall()
+        # Handle ball physics
+        handleBallPhysx()
+        # Handle animation
+        handleAnim()
+        #--Draw
+        P1_currentFrame = Player_1.animations[Player_1.current_state]
+        P2_currentFrame = Player_2.animations[Player_2.current_state]
+        screen.fill("#6E260E")
+        #Background
+        # drawBg()
+        PlayBg(game_bg)
+
+        newPaddle.drawPaddle(screen)
+        newPaddle.handleMovement()
+        # NewAiPaddle.drawPaddle(screen)
+        # NewAiPaddle.handleMovement(Ball)
+        NewAiPaddle.drawPaddle(screen)
+        NewAiPaddle.handleMovement(Ball)
+
+        #Health bars
+        hud = pygame.transform.scale(HUDBar, (800, 150))
+        screen.blit(hud, (0, 505))
+        Player_1.health.drawHP(screen)
+        screen.blit(healthBar, (50, 550)) 
+        Player_2.health.drawHP(screen)
+        screen.blit(healthBar, (800 - 250, 550))
+
+        #Ball
+        Ball.drawBall(Ball_animList)
+        #Draw Sprites
+        screen.blit(P1_currentFrame[frame_player_1], (280, 260))
+        flipped_image = pygame.transform.flip(P2_currentFrame[frame_player_2], True, False)
+        screen.blit(flipped_image, (800 - (280 + 164), 260))
+        #Ground
+        drawGround()
+        #Update display
+        pygame.display.update()
+        clock.tick(80)
 pygame.quit()
