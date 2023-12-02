@@ -51,7 +51,7 @@ m_width = menu_images[0].get_width()
 
 # Font
 
-Game_font = pygame.font.Font("Assets/fonts/Robus-BWqOd.otf", 156)
+Game_font = pygame.font.Font("Assets/fonts/Robus-BWqOd.otf", 136)
 Game_font_s = pygame.font.Font("Assets/fonts/Robus-BWqOd.otf", 76)
 
 # SpriteSheets
@@ -481,12 +481,12 @@ def mainMenu():
     single_player = Game_font_s.render("Single Player", True, (255, 255, 255))
     multi_player = Game_font_s.render("Multi Player", True, (255, 255, 255))
 
-    Game_name = Game_font.render("Pong ii", True, (255, 255, 255))
-    Game_name_shadow = Game_font.render("Pong ii", True, (0, 0, 0))
+    Game_name = Game_font.render("Mortal PongBat", True, (210, 43, 43))
+    Game_name_shadow = Game_font.render("Mortal PongBat", True, (129, 19, 49))
 
     sp_rect = single_player.get_rect(center=(400, 240))
     mp_rect = multi_player.get_rect(center=(400, 340))
-    start_rect_s = Game_name.get_rect(center=(400, 88))
+    start_rect_s = Game_name.get_rect(center=(400, 95))
     start_rect = Game_name.get_rect(center=(400, 85))
     screen.blit(Game_name_shadow, start_rect_s)
     screen.blit(Game_name, start_rect)
