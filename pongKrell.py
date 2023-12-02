@@ -37,6 +37,8 @@ for i in range(1, 4):
     bg_images.append(bg_image)
 bg_width = bg_images[0].get_width()
 
+
+
 menu_images = []
 for i in range(0, 7):
     m_image = pygame.image.load(f"Assets/background/dark/frame_{i}_delay-1s.gif").convert_alpha()
@@ -258,7 +260,7 @@ class AiPaddle(Paddle):
 ball_x = 402
 ball_y = 250
 ball_rad = 10
-ball_speed = 7
+ball_speed = 0
 ball_dx = ball_speed
 ball_dy = ball_speed
 
@@ -357,11 +359,11 @@ def PlayBg(background):
 def PlayMainBg():
     global x_frames_bg, last_update_bg
     menu_images = []
-    animation_delay = 60
+    animation_delay = 0.3
     current_time = pygame.time.get_ticks()
     for i in range(0, 19):
         m_image = pygame.image.load(f"Assets/background/main/frame_{i}_delay-1s.gif").convert_alpha()
-        m_image = pygame.transform.scale(m_image, (800, 700))
+        m_image = pygame.transform.scale(m_image, (900, 800))
         menu_images.append(m_image)
     if current_time - last_update_bg >= animation_delay:
         x_frames_bg = (x_frames_bg + 1) % len(menu_images)
@@ -561,14 +563,15 @@ frame_player_2 = 0
 
 Player_1 = characterSelect(randint(1, 6), P1_Health)
 Player_2 = characterSelect(randint(1, 6), P2_Health)
-# menu_images = mapSelect(randint(1, 4))
-game_bg = mapSelect(2)
+game_bg = mapSelect(randint(1, 4))
+# game_bg = mapSelect(2)
 
 newPaddle = P2Paddle(20, 100, 20, 250)
 NewAiPaddle = AiPaddle(20, 100, 800-40, 250)
 
 reset = 100
 current = 0
+Ball.reset = True
 
 while running:
     for event in pygame.event.get():
@@ -581,8 +584,8 @@ while running:
     if Game_Over == True:
         gameOverScreen()
     else:
-        current_time = pygame.time.get_ticks()
         resetBall()
+        current_time = pygame.time.get_ticks()
         # Handle ball physics
         handleBallPhysx()
         # Handle animation
