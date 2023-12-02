@@ -37,9 +37,6 @@ for i in range(1, 4):
     bg_images.append(bg_image)
 bg_width = bg_images[0].get_width()
 
-main_Bg = pygame.image.load("Assets/background/Menu.jpg").convert_alpha()
-resize_main = pygame.transform.scale(main_Bg,(800,650))
-
 menu_images = []
 for i in range(0, 7):
     m_image = pygame.image.load(f"Assets/background/dark/frame_{i}_delay-1s.gif").convert_alpha()
