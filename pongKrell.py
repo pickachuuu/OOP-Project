@@ -213,29 +213,24 @@ class P1Paddle(Paddle):
     def __init__(self, width, height, x_pos, y_pos, image):
         super().__init__(width, height, x_pos, y_pos, image)
 
-    def handleMovement(self):
+    def handleMovement(self, Ball):
         key = pygame.key.get_pressed()
-        if key[pygame.K_w]:
+        if key[pygame.K_w] and self.y_pos > 0:
             self.y_pos -= 7
-        if key[pygame.K_s]:
+        if key[pygame.K_s] and self.y_pos < 400:
             self.y_pos += 7
 
 class P2Paddle(Paddle):
     def __init__(self, width, height, x_pos, y_pos, image):
         super().__init__(width, height, x_pos, y_pos, image)
 
-    def handleMovement(self):
+    def handleMovement(self, Ball):
         key = pygame.key.get_pressed()
         if key[pygame.K_UP] and self.y_pos > 0:
             self.y_pos -= 7
         if key[pygame.K_DOWN] and self.y_pos < 400:
             self.y_pos += 7
 
-    def drawPaddle(self, surface):
-        self.paddle_img = pygame.transform.scale(self.paddle_img, (20, 110))
-        self.paddle_rect = pygame.Rect(self.x_pos, self.y_pos, self.paddle_width, self.paddle_height)
-        screen.blit(self.paddle_img, self.paddle_rect)
-        # pygame.draw.rect(surface, ("Red"), self.paddle_rect)
 
 class AiPaddle(Paddle):
     def __init__(self, width, height, x_pos, y_pos, image):
@@ -294,7 +289,7 @@ def handleBallPhysx():
     delay = 5000
     last_update = pygame.time.get_ticks()
 
-    if NewAiPaddle.paddle_rect.colliderect(Ball.ball_rect):
+    if newPaddle2.paddle_rect.colliderect(Ball.ball_rect):
         Ball.dx += 1
         Ball.dx = -Ball.dx
 
@@ -309,7 +304,7 @@ def handleBallPhysx():
             Player_2.current_state = "hurt"
             Player_1.current_state = "attack"
 
-    if newPaddle.paddle_rect.colliderect(Ball.ball_rect):
+    if newPaddle1.paddle_rect.colliderect(Ball.ball_rect):
         Ball.dx -= 1
         Ball.dx = -Ball.dx
 
@@ -484,20 +479,31 @@ def mainMenu():
     PlayMainBg()
 
     single_player = Game_font_s.render("Single Player", True, (255, 255, 255))
+    multi_player = Game_font_s.render("Multi Player", True, (255, 255, 255))
+
     Game_name = Game_font.render("Pong ii", True, (255, 255, 255))
     Game_name_shadow = Game_font.render("Pong ii", True, (0, 0, 0))
+
     sp_rect = single_player.get_rect(center=(400, 240))
+    mp_rect = multi_player.get_rect(center=(400, 340))
     start_rect_s = Game_name.get_rect(center=(400, 88))
     start_rect = Game_name.get_rect(center=(400, 85))
     screen.blit(Game_name_shadow, start_rect_s)
     screen.blit(Game_name, start_rect)
     screen.blit(single_player, sp_rect)
+    screen.blit(multi_player, mp_rect)
+
 
     # Check for button click
     mouse_pos = pygame.mouse.get_pos()
     if sp_rect.collidepoint(mouse_pos):
         if pygame.mouse.get_pressed()[0]:
             Menu = False
+            return 1
+    elif mp_rect.collidepoint(mouse_pos):
+        if pygame.mouse.get_pressed()[0]:
+            Menu = False
+            return 2
     pygame.display.update()
 
 def handleAnim():
@@ -590,7 +596,13 @@ while running:
             running = False
 
     while (Menu):
-        mainMenu()
+        mode = mainMenu()
+        if mode == 1:
+            newPaddle1 = P1Paddle(20, 100, 20, 250, P1PaddleImg)
+            newPaddle2 = AiPaddle(20, 100, 800-40, 250, AiPaddleImg)
+        elif mode == 2:
+            newPaddle1 = P1Paddle(20, 100, 20, 250, P1PaddleImg)
+            newPaddle2 = P2Paddle(20, 100, 800-40, 250, P2PaddleImg)
 
     if Game_Over == True:
         gameOverScreen()
@@ -609,12 +621,11 @@ while running:
         # drawBg()
         PlayBg(game_bg)
 
-        newPaddle.drawPaddle(screen)
-        newPaddle.handleMovement()
-        # NewAiPaddle.drawPaddle(screen)
-        # NewAiPaddle.handleMovement(Ball)
-        NewAiPaddle.drawPaddle(screen)
-        NewAiPaddle.handleMovement(Ball)
+        newPaddle1.drawPaddle(screen)
+        newPaddle1.handleMovement(Ball)
+
+        newPaddle2.drawPaddle(screen)
+        newPaddle2.handleMovement(Ball)
 
         #Health bars
         hud = pygame.transform.scale(HUDBar, (800, 150))
