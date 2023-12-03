@@ -6,11 +6,11 @@ from pygame import mixer
 pygame.init()
 mixer.init()
 
-# Game properties
+# Game properties   
 
 SIZE = 800, 650
 width, height = SIZE
-pygame.display.set_caption("PONG II")
+pygame.display.set_caption("Mortal PongBat")
 screen = pygame.display.set_mode(SIZE)
 bg_color = 'black'
 clock = pygame.time.Clock()
@@ -18,6 +18,13 @@ pygame.time.set_timer(pygame.USEREVENT, 1000)
 running = True
 icon = pygame.image.load("Assets/Random/icon.png")
 pygame.display.set_icon(icon)
+
+
+# Music properties
+pygame.mixer.music.load("Assets/Sounds/bgm.mp3")
+crash_sound = mixer.Sound("Assets/Sounds/hit.wav")
+pygame.mixer.music.set_volume(0.1)
+mixer.music.play()
 
 
 # Paddle dimensions
@@ -40,8 +47,6 @@ for i in range(1, 4):
     bg_images.append(bg_image)
 bg_width = bg_images[0].get_width()
 
-
-
 menu_images = []
 for i in range(0, 7):
     m_image = pygame.image.load(f"Assets/background/dark/frame_{i}_delay-1s.gif").convert_alpha()
@@ -51,8 +56,8 @@ m_width = menu_images[0].get_width()
 
 # Font
 
-Game_font = pygame.font.Font("Assets/fonts/Robus-BWqOd.otf", 136)
-Game_font_s = pygame.font.Font("Assets/fonts/Robus-BWqOd.otf", 76)
+Game_font = pygame.font.Font("Assets/fonts/mkmyth.ttf", 86)
+Game_font_s = pygame.font.Font("Assets/fonts/mkmyth.ttf", 45)
 
 # SpriteSheets
 
@@ -235,8 +240,8 @@ class P2Paddle(Paddle):
 class AiPaddle(Paddle):
     def __init__(self, width, height, x_pos, y_pos, image):
         super().__init__(width, height, x_pos, y_pos, image)
-        self.duration = 1200
-        self.move_duration = self.duration
+        self.duration = 1000
+        self.move_duration = self.duration + randint(200, 1000)
         self.move_cooldown = self.duration
         self.last_move_time = pygame.time.get_ticks()
 
@@ -282,14 +287,11 @@ def drawBg():
             screen.blit(i, ((x * bg_width) - scroll * speed, 0))
             speed += 0.2
 
-
 def handleBallPhysx():
     global ball_x, ball_y, ball_dx, ball_dy, scroll, frame_player_1, frame_player_2
-    current_time = pygame.time.get_ticks()
-    delay = 5000
-    last_update = pygame.time.get_ticks()
 
     if newPaddle2.paddle_rect.colliderect(Ball.ball_rect):
+        CollideSound()
         Ball.dx += 1
         Ball.dx = -Ball.dx
 
@@ -305,6 +307,7 @@ def handleBallPhysx():
             Player_1.current_state = "attack"
 
     if newPaddle1.paddle_rect.colliderect(Ball.ball_rect):
+        CollideSound()
         Ball.dx -= 1
         Ball.dx = -Ball.dx
 
@@ -482,17 +485,16 @@ def mainMenu():
     multi_player = Game_font_s.render("Multi Player", True, (255, 255, 255))
 
     Game_name = Game_font.render("Mortal PongBat", True, (210, 43, 43))
-    Game_name_shadow = Game_font.render("Mortal PongBat", True, (129, 19, 49))
+    Game_name_shadow = Game_font.render("Mortal PongBat", True, (145, 56, 49))
 
     sp_rect = single_player.get_rect(center=(400, 240))
     mp_rect = multi_player.get_rect(center=(400, 340))
-    start_rect_s = Game_name.get_rect(center=(400, 95))
     start_rect = Game_name.get_rect(center=(400, 85))
+    start_rect_s = Game_name.get_rect(center=(400, 87))
     screen.blit(Game_name_shadow, start_rect_s)
     screen.blit(Game_name, start_rect)
     screen.blit(single_player, sp_rect)
     screen.blit(multi_player, mp_rect)
-
 
     # Check for button click
     mouse_pos = pygame.mouse.get_pos()
@@ -552,6 +554,9 @@ def gameOverScreen():
     screen.blit(Player_win, (20, 500))
     pygame.display.update()
     clock.tick(80)
+
+def CollideSound():
+    crash_sound.play()
 
 Menu = True
 Game_Over = False
@@ -620,10 +625,8 @@ while running:
         #Background
         # drawBg()
         PlayBg(game_bg)
-
         newPaddle1.drawPaddle(screen)
         newPaddle1.handleMovement(Ball)
-
         newPaddle2.drawPaddle(screen)
         newPaddle2.handleMovement(Ball)
 
