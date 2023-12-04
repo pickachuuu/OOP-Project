@@ -6,7 +6,7 @@ from pygame import mixer
 pygame.init()
 mixer.init()
 
-# Game properties   
+# Game properties
 
 SIZE = 800, 650
 width, height = SIZE
@@ -21,11 +21,27 @@ pygame.display.set_icon(icon)
 
 
 # Music properties
+
 pygame.mixer.music.load("Assets/Sounds/bgm.mp3")
 crash_sound = mixer.Sound("Assets/Sounds/hit.wav")
-pygame.mixer.music.set_volume(0.1)
-mixer.music.play()
+pygame.mixer.music.set_volume(0.5)
+mixer.music.play(-1)
+crash_sound.set_volume(0.5)
 
+# Button properties
+
+music_on = pygame.image.load("Assets/buttons/m_on.png")
+music_off = pygame.image.load("Assets/buttons/m_off.png")
+music_on = pygame.transform.scale(music_on, (64,64))
+music_off = pygame.transform.scale(music_off, (64,64))
+
+sfx_on = pygame.image.load("Assets/buttons/on.png")
+sfx_off = pygame.image.load("Assets/buttons/off.png")
+sfx_on = pygame.transform.scale(sfx_on, (64,64))
+sfx_off = pygame.transform.scale(sfx_off, (64,64))
+
+sfx_rect = sfx_on.get_rect(center=(355, 50))
+msc_rect = music_on.get_rect(center=(435, 50))
 
 # Paddle dimensions
 
@@ -238,7 +254,7 @@ class P2Paddle(Paddle):
 
 
 class AiPaddle(Paddle):
-    def __init__(self, width, height, x_pos, y_pos, image):
+    def __init__(self, width, height, x_pos, y_pos, image): 
         super().__init__(width, height, x_pos, y_pos, image)
         self.duration = 1000
         self.move_duration = self.duration + randint(200, 1000)
@@ -290,8 +306,9 @@ def drawBg():
 def handleBallPhysx():
     global ball_x, ball_y, ball_dx, ball_dy, scroll, frame_player_1, frame_player_2
 
-    if newPaddle2.paddle_rect.colliderect(Ball.ball_rect):
+    if newPaddle2.paddle_rect.colliderect(Ball.ball_rect) and not Ball.collision_occurred:
         CollideSound()
+        Ball.collision_occurred = True
         Ball.dx += 1
         Ball.dx = -Ball.dx
 
@@ -305,13 +322,15 @@ def handleBallPhysx():
             frame_player_1 = 0
             Player_2.current_state = "hurt"
             Player_1.current_state = "attack"
+        Ball.collision_occurred = False  # Reset the collision flag
 
-    if newPaddle1.paddle_rect.colliderect(Ball.ball_rect):
+    if newPaddle1.paddle_rect.colliderect(Ball.ball_rect) and not Ball.collision_occurred:
         CollideSound()
+        Ball.collision_occurred = True
         Ball.dx -= 1
         Ball.dx = -Ball.dx
 
-    if Ball.x - ball_rad < - 100:
+    if Ball.x - ball_rad < -100:
         Ball.resetBall()
         Ball.dx = -Ball.dx
         Player_1.health.hp -= 20
@@ -320,12 +339,15 @@ def handleBallPhysx():
             frame_player_1 = 0
             Player_2.current_state = "attack"
             Player_1.current_state = "hurt"
+        Ball.collision_occurred = False  # Reset the collision flag
 
     # Ball boundaries y
-    if Ball.y + ball_rad >= height - 180:
+    if Ball.y + ball_rad >= height - 180 or Ball.y - ball_rad < 0 - 10:
         Ball.dy = -Ball.dy
-    if Ball.y - ball_rad < 0 - 10:
-        Ball.dy = -Ball.dy
+
+    if not (newPaddle2.paddle_rect.colliderect(Ball.ball_rect) or newPaddle1.paddle_rect.colliderect(Ball.ball_rect)):
+        Ball.collision_occurred = False  # Reset the collision flag
+
 
 def getAnimations(animation_list, length, player, action):
     for x in range(length):
@@ -558,6 +580,40 @@ def gameOverScreen():
 def CollideSound():
     crash_sound.play()
 
+def handleButtons():
+    global button, image, image_sfx, last_click_state
+    mouse_pos = pygame.mouse.get_pos()
+    click = pygame.mouse.get_pressed()
+
+    if msc_rect.collidepoint(mouse_pos) and click[0] and not last_click_state:
+        last_click_state = True
+        if button:
+            button = False
+            image = music_off
+            pygame.mixer.music.set_volume(0.0)
+        else:
+            button = True
+            image = music_on
+            pygame.mixer.music.set_volume(0.5)
+    elif not click[0]:
+        last_click_state = False
+    
+    if sfx_rect.collidepoint(mouse_pos) and click[0] and not last_click_state:
+        last_click_state = True
+        if button:
+            button = False
+            image_sfx = sfx_off
+            crash_sound.set_volume(0.0)
+        else:
+            button = True
+            image_sfx = sfx_on
+            crash_sound.set_volume(0.5)
+    elif not click[0]:
+        last_click_state = False
+
+    screen.blit(image, msc_rect)
+    screen.blit(image_sfx, sfx_rect)
+
 Menu = True
 Game_Over = False
 last_update = pygame.time.get_ticks()
@@ -573,6 +629,11 @@ last_update_bg = pygame.time.get_ticks()
 x_frames_gbg = 0
 x_frames_bg = 0
 
+# buttons
+
+button = True
+image = music_on
+image_sfx = sfx_on
 
 # Mainloop
 
@@ -612,6 +673,7 @@ while running:
     if Game_Over == True:
         gameOverScreen()
     else:
+        
         resetBall()
         current_time = pygame.time.get_ticks()
         # Handle ball physics
@@ -625,6 +687,7 @@ while running:
         #Background
         # drawBg()
         PlayBg(game_bg)
+        handleButtons()
         newPaddle1.drawPaddle(screen)
         newPaddle1.handleMovement(Ball)
         newPaddle2.drawPaddle(screen)
@@ -637,7 +700,7 @@ while running:
         screen.blit(healthBar, (50, 550)) 
         Player_2.health.drawHP(screen)
         screen.blit(healthBar, (800 - 250, 550))
-
+        
         #Ball
         Ball.drawBall(Ball_animList)
         #Draw Sprites
