@@ -73,7 +73,9 @@ m_width = menu_images[0].get_width()
 # Font
 
 Game_font = pygame.font.Font("Assets/fonts/mkmyth.ttf", 86)
+Game_font_m = pygame.font.Font("Assets/fonts/mkmyth.ttf", 50)
 Game_font_s = pygame.font.Font("Assets/fonts/mkmyth.ttf", 45)
+
 
 # SpriteSheets
 
@@ -276,24 +278,6 @@ class AiPaddle(Paddle):
             self.y_pos -= move_speed
         if self.y_pos < Ball.y - offset and self.y_pos < 400:
             self.y_pos += move_speed
-
-# Button Class
-class Button:
-    def __init__(self, x, y, width, height, text, callback):
-        self.rect = pygame.Rect(x, y, width, height)
-        self.text = text
-        self.callback = callback
-
-    def draw(self, surface, font):
-        pygame.draw.rect(surface, (0, 128, 255), self.rect)
-        pygame.draw.rect(surface, (255, 255, 255), self.rect, 2)
-        text_surface = font.render(self.text, True, (255, 255, 255))
-        text_rect = text_surface.get_rect(center=self.rect.center)
-        surface.blit(text_surface, text_rect)
-
-    def is_clicked(self, event):
-        return self.rect.collidepoint(event.pos)
-
 
 # SpriteSheet class instance
 
@@ -514,18 +498,7 @@ def resetBall():
             current += 1
 
 def mainMenu():
-    global Menu, running, x_frames, last_update,Game_Over, Ball, Player_1, Player_2  # Include last_update in global variables
-    Game_Over = False  # Reset Game_Over flag when entering the menu
-    Ball.resetBall()
-    Player_1.isDead = False
-    Player_2.isDead = False
-    Player_1.current_state = "idle"
-    Player_2.current_state = "idle"
-    Player_1.health.hp = Player_1.health.max_HP
-    Player_2.health.hp = Player_2.health.max_HP
-    frame_player_1 = 0
-    frame_player_2 = 0
-
+    global Menu, running, x_frames, last_update  # Include last_update in global variables
     for event in pygame.event.get():
         if event.type == QUIT:
             running = False
@@ -535,28 +508,30 @@ def mainMenu():
     single_player = Game_font_s.render("Single Player", True, (255, 255, 255))
     multi_player = Game_font_s.render("Multi Player", True, (255, 255, 255))
 
-    Game_name = Game_font.render("Pong ii", True, (255, 255, 255))
-    Game_name_shadow = Game_font.render("Pong ii", True, (0, 0, 0))
+    Game_name = Game_font.render("Mortal PongBat", True, (210, 43, 43))
+    Game_name_shadow = Game_font.render("Mortal PongBat", True, (145, 56, 49))
 
     sp_rect = single_player.get_rect(center=(400, 240))
     mp_rect = multi_player.get_rect(center=(400, 340))
-    start_rect_s = Game_name.get_rect(center=(400, 88))
     start_rect = Game_name.get_rect(center=(400, 85))
-    screen.blit(Game_name_shadow, start_rect_s)
-    screen.blit(Game_name, start_rect)
-    screen.blit(single_player, sp_rect)
-    screen.blit(multi_player, mp_rect)
+    start_rect_s = Game_name.get_rect(center=(400, 87))
 
-    # Check for button click
     mouse_pos = pygame.mouse.get_pos()
     if sp_rect.collidepoint(mouse_pos):
+        single_player = Game_font_m.render("Single Player", True, (210, 255, 255))
         if pygame.mouse.get_pressed()[0]:
             Menu = False
             return 1
     elif mp_rect.collidepoint(mouse_pos):
+        multi_player = Game_font_m.render("Multi Player", True, (210, 255, 255))
         if pygame.mouse.get_pressed()[0]:
             Menu = False
             return 2
+        
+    screen.blit(Game_name_shadow, start_rect_s)
+    screen.blit(Game_name, start_rect)
+    screen.blit(single_player, sp_rect)
+    screen.blit(multi_player, mp_rect)
     pygame.display.update()
 
 def handleAnim():
@@ -588,16 +563,9 @@ def handleAnim():
         if frame_player_2 >= len(Player_2.animations[Player_2.current_state]) and Player_2.current_state != "death":
                 Player_2.current_state = "idle"
                 frame_player_2 = 0
-def back_to_menu():
-    global Menu
-    Menu = True
-
-back_to_menu_button = Button(300, 400, 200, 50, "Back to Menu", back_to_menu)
-
-
 
 def gameOverScreen():
-    global frame_player_1, frame_player_2, Game_Over
+    global frame_player_1, frame_player_2
     screen.fill("Black")
     font = pygame.font.Font(None, 36)
     Game_Over_text = Game_font.render("Game Over!", True, (255, 255, 255))
@@ -608,9 +576,14 @@ def gameOverScreen():
         screen.blit(P1_currentFrame[frame_player_1], (300, 220))
     elif Player_1.current_state == "death":
         screen.blit(P2_currentFrame[frame_player_2], (300, 220))
+
+    mouse_pos = pygame.mouse.get_pos()
+    if Game_Over_rect.collidepoint(mouse_pos):
+        if pygame.mouse.get_pressed()[0]:
+            restartGame()
+
     screen.blit(Game_Over_text, Game_Over_rect)
     screen.blit(Player_win, (20, 500))
-    back_to_menu_button.draw(screen, font)
     pygame.display.update()
     clock.tick(80)
 
@@ -651,6 +624,17 @@ def handleButtons():
     screen.blit(image, msc_rect)
     screen.blit(image_sfx, sfx_rect)
 
+def restartGame():
+    global Game_Over, Menu
+    Game_Over = False
+    Menu = True
+
+    Player_1.health.hp = 100
+    Player_2.health.hp = 100
+
+    Player_1.current_state = "idle"
+    Player_2.current_state = "idle"
+
 Menu = True
 Game_Over = False
 last_update = pygame.time.get_ticks()
@@ -661,6 +645,7 @@ BallLen = 6
 getBallAnimations(Ball_animList, BallLen, Ball)
 
 # Character Animation properties
+
 animation_cooldown = 100
 last_update_bg = pygame.time.get_ticks()
 x_frames_gbg = 0
@@ -680,14 +665,10 @@ frame_player_2 = 0
 Player_1 = characterSelect(randint(1, 6), P1_Health)
 Player_2 = characterSelect(randint(1, 6), P2_Health)
 game_bg = mapSelect(randint(1, 4))
-# game_bg = mapSelect(2)
 
 P1PaddleImg = pygame.image.load("Assets/Paddles/paddle_p1.jpg")
 P2PaddleImg = pygame.image.load("Assets/Paddles/paddle_p2.jpg")
 AiPaddleImg = pygame.image.load("Assets/Paddles/paddle_ai.jpg")
-
-newPaddle = P2Paddle(20, 100, 20, 250, P1PaddleImg)
-NewAiPaddle = AiPaddle(20, 100, 800-40, 250, AiPaddleImg)
 
 reset = 100
 current = 0
@@ -698,7 +679,7 @@ while running:
         if event.type == QUIT:
             running = False
 
-    while Menu:
+    while (Menu):
         mode = mainMenu()
         if mode == 1:
             newPaddle1 = P1Paddle(20, 100, 20, 250, P1PaddleImg)
@@ -707,13 +688,8 @@ while running:
             newPaddle1 = P1Paddle(20, 100, 20, 250, P1PaddleImg)
             newPaddle2 = P2Paddle(20, 100, 800-40, 250, P2PaddleImg)
 
-    if Game_Over:
+    if Game_Over == True:
         gameOverScreen()
-        # Check for button click
-        for event in pygame.event.get():
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                if back_to_menu_button.is_clicked(event):
-                    back_to_menu()
     else:
         
         resetBall()
