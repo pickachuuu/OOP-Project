@@ -277,6 +277,24 @@ class AiPaddle(Paddle):
         if self.y_pos < Ball.y - offset and self.y_pos < 400:
             self.y_pos += move_speed
 
+# Button Class
+class Button:
+    def __init__(self, x, y, width, height, text, callback):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.text = text
+        self.callback = callback
+
+    def draw(self, surface, font):
+        pygame.draw.rect(surface, (0, 128, 255), self.rect)
+        pygame.draw.rect(surface, (255, 255, 255), self.rect, 2)
+        text_surface = font.render(self.text, True, (255, 255, 255))
+        text_rect = text_surface.get_rect(center=self.rect.center)
+        surface.blit(text_surface, text_rect)
+
+    def is_clicked(self, event):
+        return self.rect.collidepoint(event.pos)
+
+
 # SpriteSheet class instance
 
 # ball
@@ -496,7 +514,18 @@ def resetBall():
             current += 1
 
 def mainMenu():
-    global Menu, running, x_frames, last_update  # Include last_update in global variables
+    global Menu, running, x_frames, last_update,Game_Over, Ball, Player_1, Player_2  # Include last_update in global variables
+    Game_Over = False  # Reset Game_Over flag when entering the menu
+    Ball.resetBall()
+    Player_1.isDead = False
+    Player_2.isDead = False
+    Player_1.current_state = "idle"
+    Player_2.current_state = "idle"
+    Player_1.health.hp = Player_1.health.max_HP
+    Player_2.health.hp = Player_2.health.max_HP
+    frame_player_1 = 0
+    frame_player_2 = 0
+
     for event in pygame.event.get():
         if event.type == QUIT:
             running = False
@@ -506,13 +535,13 @@ def mainMenu():
     single_player = Game_font_s.render("Single Player", True, (255, 255, 255))
     multi_player = Game_font_s.render("Multi Player", True, (255, 255, 255))
 
-    Game_name = Game_font.render("Mortal PongBat", True, (210, 43, 43))
-    Game_name_shadow = Game_font.render("Mortal PongBat", True, (145, 56, 49))
+    Game_name = Game_font.render("Pong ii", True, (255, 255, 255))
+    Game_name_shadow = Game_font.render("Pong ii", True, (0, 0, 0))
 
     sp_rect = single_player.get_rect(center=(400, 240))
     mp_rect = multi_player.get_rect(center=(400, 340))
+    start_rect_s = Game_name.get_rect(center=(400, 88))
     start_rect = Game_name.get_rect(center=(400, 85))
-    start_rect_s = Game_name.get_rect(center=(400, 87))
     screen.blit(Game_name_shadow, start_rect_s)
     screen.blit(Game_name, start_rect)
     screen.blit(single_player, sp_rect)
@@ -559,9 +588,16 @@ def handleAnim():
         if frame_player_2 >= len(Player_2.animations[Player_2.current_state]) and Player_2.current_state != "death":
                 Player_2.current_state = "idle"
                 frame_player_2 = 0
+def back_to_menu():
+    global Menu
+    Menu = True
+
+back_to_menu_button = Button(300, 400, 200, 50, "Back to Menu", back_to_menu)
+
+
 
 def gameOverScreen():
-    global frame_player_1, frame_player_2
+    global frame_player_1, frame_player_2, Game_Over
     screen.fill("Black")
     font = pygame.font.Font(None, 36)
     Game_Over_text = Game_font.render("Game Over!", True, (255, 255, 255))
@@ -574,6 +610,7 @@ def gameOverScreen():
         screen.blit(P2_currentFrame[frame_player_2], (300, 220))
     screen.blit(Game_Over_text, Game_Over_rect)
     screen.blit(Player_win, (20, 500))
+    back_to_menu_button.draw(screen, font)
     pygame.display.update()
     clock.tick(80)
 
@@ -661,7 +698,7 @@ while running:
         if event.type == QUIT:
             running = False
 
-    while (Menu):
+    while Menu:
         mode = mainMenu()
         if mode == 1:
             newPaddle1 = P1Paddle(20, 100, 20, 250, P1PaddleImg)
@@ -670,8 +707,13 @@ while running:
             newPaddle1 = P1Paddle(20, 100, 20, 250, P1PaddleImg)
             newPaddle2 = P2Paddle(20, 100, 800-40, 250, P2PaddleImg)
 
-    if Game_Over == True:
+    if Game_Over:
         gameOverScreen()
+        # Check for button click
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if back_to_menu_button.is_clicked(event):
+                    back_to_menu()
     else:
         
         resetBall()
