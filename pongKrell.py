@@ -10,7 +10,7 @@ mixer.init()
 
 SIZE = 800, 650
 width, height = SIZE
-pygame.display.set_caption("Mortal PongBat")
+pygame.display.set_caption("PongBat")
 screen = pygame.display.set_mode(SIZE)
 bg_color = 'black'
 clock = pygame.time.Clock()
@@ -226,11 +226,31 @@ class Paddle():
         self.y_pos = y_pos
         self.paddle_rect = pygame.Rect(self.x_pos, self.y_pos, self.paddle_width, self.paddle_height)
         self.paddle_img = image
+        self.duration = 1000
+        self.move_duration = self.duration + randint(200, 1000)
+        self.move_cooldown = self.duration
+        self.last_move_time = pygame.time.get_ticks()
 
     def drawPaddle(self, surface):
         self.paddle_img = pygame.transform.scale(self.paddle_img, (20, 110))
         self.paddle_rect = pygame.Rect(self.x_pos, self.y_pos, self.paddle_width, self.paddle_height)
         screen.blit(self.paddle_img, self.paddle_rect)
+
+    def handleMovement(self, Ball):
+        offset = 35  
+        current_time = pygame.time.get_ticks()
+        move_speed = 7  
+        if current_time - self.last_move_time >= self.move_duration:
+            if current_time - self.last_move_time >= self.move_duration + self.move_cooldown:
+                self.last_move_time = current_time
+                self.move_duration = self.duration + randint(900, 1100)
+                self.move_cooldown = self.duration - randint(0, 500)
+            else:
+                return
+        if self.y_pos > Ball.y - offset and self.y_pos > 0:
+            self.y_pos -= move_speed
+        if self.y_pos < Ball.y - offset and self.y_pos < 400:
+            self.y_pos += move_speed
 
 class P1Paddle(Paddle):
     def __init__(self, width, height, x_pos, y_pos, image):
@@ -255,29 +275,29 @@ class P2Paddle(Paddle):
             self.y_pos += 7
 
 
-class AiPaddle(Paddle):
-    def __init__(self, width, height, x_pos, y_pos, image): 
-        super().__init__(width, height, x_pos, y_pos, image)
-        self.duration = 1000
-        self.move_duration = self.duration + randint(200, 1000)
-        self.move_cooldown = self.duration
-        self.last_move_time = pygame.time.get_ticks()
+# class AiPaddle(Paddle):
+#     def __init__(self, width, height, x_pos, y_pos, image): 
+#         super().__init__(width, height, x_pos, y_pos, image)
+#         self.duration = 1000
+#         self.move_duration = self.duration + randint(200, 1000)
+#         self.move_cooldown = self.duration
+#         self.last_move_time = pygame.time.get_ticks()
 
-    def handleMovement(self, Ball):
-        offset = 35  
-        current_time = pygame.time.get_ticks()
-        move_speed = 7  
-        if current_time - self.last_move_time >= self.move_duration:
-            if current_time - self.last_move_time >= self.move_duration + self.move_cooldown:
-                self.last_move_time = current_time
-                self.move_duration = self.duration + randint(900, 1100)
-                self.move_cooldown = self.duration - randint(0, 500)
-            else:
-                return
-        if self.y_pos > Ball.y - offset and self.y_pos > 0:
-            self.y_pos -= move_speed
-        if self.y_pos < Ball.y - offset and self.y_pos < 400:
-            self.y_pos += move_speed
+#     # def handleMovement(self, Ball):
+#     #     offset = 35  
+#     #     current_time = pygame.time.get_ticks()
+#     #     move_speed = 7  
+#     #     if current_time - self.last_move_time >= self.move_duration:
+#     #         if current_time - self.last_move_time >= self.move_duration + self.move_cooldown:
+#     #             self.last_move_time = current_time
+#     #             self.move_duration = self.duration + randint(900, 1100)
+#     #             self.move_cooldown = self.duration - randint(0, 500)
+#     #         else:
+#     #             return
+#     #     if self.y_pos > Ball.y - offset and self.y_pos > 0:
+#     #         self.y_pos -= move_speed
+#     #     if self.y_pos < Ball.y - offset and self.y_pos < 400:
+#     #         self.y_pos += move_speed
 
 # SpriteSheet class instance
 
@@ -508,8 +528,8 @@ def mainMenu():
     single_player = Game_font_s.render("Single Player", True, (255, 255, 255))
     multi_player = Game_font_s.render("Multi Player", True, (255, 255, 255))
 
-    Game_name = Game_font.render("Mortal PongBat", True, (210, 43, 43))
-    Game_name_shadow = Game_font.render("Mortal PongBat", True, (145, 56, 49))
+    Game_name = Game_font.render("PongBat", True, (210, 43, 43))
+    Game_name_shadow = Game_font.render("PongBat", True, (145, 56, 49))
 
     sp_rect = single_player.get_rect(center=(400, 240))
     mp_rect = multi_player.get_rect(center=(400, 340))
@@ -565,27 +585,51 @@ def handleAnim():
                 frame_player_2 = 0
 
 def gameOverScreen():
-    global frame_player_1, frame_player_2
-    screen.fill("Black")
-    font = pygame.font.Font(None, 36)
-    Game_Over_text = Game_font.render("Game Over!", True, (255, 255, 255))
-    Player_win = Game_font.render(f"Player 1 wins", True, (255, 255, 255))
-    Game_Over_rect = Game_Over_text.get_rect(center=(400, 150))
-    handleAnim()
-    if Player_2.current_state == "death":
-        screen.blit(P1_currentFrame[frame_player_1], (300, 220))
-    elif Player_1.current_state == "death":
-        screen.blit(P2_currentFrame[frame_player_2], (300, 220))
+        global frame_player_1, frame_player_2
+        screen.fill("Black")
+        game_over_text = Game_font.render("Game Over", True, (255, 255, 255))
+        play_again = Game_font_s.render("Play again", True, (255, 255, 255))
+        back_menu = Game_font_s.render("Menu", True, (255, 255, 255))
+        play_rect = play_again.get_rect(topleft=(100, 300))
+        menu_rect = back_menu.get_rect(topleft=(100, 350))
 
+        mouse_pos = pygame.mouse.get_pos()
+
+        # Play Again Button Logic
+        if play_rect.collidepoint(mouse_pos):
+            play_again, action, button_id = Game_font_m.render("Play again", True, (210, 255, 255)), restartGame, 1
+            handleButtonAction(play_rect, action, button_id)
+
+        # Return to Menu Button Logic
+        if menu_rect.collidepoint(mouse_pos):
+            back_menu, action, button_id = Game_font_m.render("Menu", True, (210, 255, 255)), backToMenu, 2
+            handleButtonAction(menu_rect, action, button_id)
+
+        # Display winner sprite
+        if Player_1.isDead:
+            screen.blit(P2_currentFrame[frame_player_2], (300, 200))
+        else:
+            screen.blit(P1_currentFrame[frame_player_1], (300, 200))
+
+        screen.blit(game_over_text, (200, 150))
+        screen.blit(play_again, play_rect)
+        screen.blit(back_menu, menu_rect)
+        pygame.display.update()
+        clock.tick(80)
+
+def handleButtonAction(rect, action, button_id):
+    global last_click_state
     mouse_pos = pygame.mouse.get_pos()
-    if Game_Over_rect.collidepoint(mouse_pos):
-        if pygame.mouse.get_pressed()[0]:
-            restartGame()
 
-    screen.blit(Game_Over_text, Game_Over_rect)
-    screen.blit(Player_win, (20, 500))
-    pygame.display.update()
-    clock.tick(80)
+    if rect.collidepoint(mouse_pos) and pygame.mouse.get_pressed()[0] and not last_click_state:
+        last_click_state = True
+        if button_id == 1:
+            action()
+        elif button_id == 2:
+            action()
+    elif not pygame.mouse.get_pressed()[0]:
+        last_click_state = False
+
 
 def CollideSound():
     crash_sound.play()
@@ -624,8 +668,8 @@ def handleButtons():
     screen.blit(image, msc_rect)
     screen.blit(image_sfx, sfx_rect)
 
-def restartGame():
-    global Game_Over, Menu
+def backToMenu():
+    global Game_Over, Menu, Player_1, Player_2, game_bg, newPaddle1, newPaddle2, Ball
     Game_Over = False
     Menu = True
 
@@ -634,6 +678,38 @@ def restartGame():
 
     Player_1.current_state = "idle"
     Player_2.current_state = "idle"
+
+    Player_1.isDead = False
+    Player_2.isDead = False
+
+    Player_1.animations = {}
+    Player_2.animations = {}
+
+    Player_1 = characterSelect(randint(1, 6), P1_Health)
+    Player_2 = characterSelect(randint(1, 6), P2_Health)
+
+    newPaddle1 = P1Paddle(20, 100, 20, 250, P1PaddleImg)
+    newPaddle2 = Paddle(20, 100, 800-40, 250, AiPaddleImg)
+
+    Ball.resetBall()
+
+def restartGame():
+    global Game_Over
+    Game_Over = False
+    Player_1.health.hp = 100
+    Player_2.health.hp = 100
+    Player_1.isDead = False
+    Player_2.isDead = False
+    Player_1.current_state = "idle"
+    Player_2.current_state = "idle"
+    newPaddle1.x_pos = 20
+    newPaddle1.y_pos = 250
+    newPaddle2.x_pos = 800 - 40
+    newPaddle2.y_pos = 250
+    Ball.resetBall()
+    global frame_player_1, frame_player_2
+    frame_player_1 = 0
+    frame_player_2 = 0
 
 Menu = True
 Game_Over = False
@@ -683,7 +759,7 @@ while running:
         mode = mainMenu()
         if mode == 1:
             newPaddle1 = P1Paddle(20, 100, 20, 250, P1PaddleImg)
-            newPaddle2 = AiPaddle(20, 100, 800-40, 250, AiPaddleImg)
+            newPaddle2 = Paddle(20, 100, 800-40, 250, AiPaddleImg)
         elif mode == 2:
             newPaddle1 = P1Paddle(20, 100, 20, 250, P1PaddleImg)
             newPaddle2 = P2Paddle(20, 100, 800-40, 250, P2PaddleImg)
